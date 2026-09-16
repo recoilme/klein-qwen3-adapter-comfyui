@@ -11,6 +11,58 @@ stock klein — only the text conditioning is computed differently, exactly like
 - Works with the distilled model (4 steps, guidance 1.0) and the base model
   (50 steps, guidance 4.0 — CFG works there).
 
+## Quickstart (from scratch)
+
+Copy-paste path from an empty machine to a first image (verified end to end on
+ComfyUI 0.36 / RTX 5090):
+
+```bash
+# 1. ComfyUI itself — skip if you already have one
+git clone https://github.com/comfyanonymous/ComfyUI
+cd ComfyUI
+python -m venv .venv && . .venv/bin/activate      # Python 3.10+
+pip install -r requirements.txt
+
+# 2. this custom node
+cd custom_nodes
+git clone https://github.com/recoilme/klein-qwen3-adapter-comfyui
+cd ..
+
+# 3. model files (paths are relative to ComfyUI/, 8.4 GiB of downloads)
+mkdir -p models/klein_adapter
+curl -L -o models/diffusion_models/flux-2-klein-4b.safetensors \
+  https://huggingface.co/Comfy-Org/flux2-klein/resolve/main/split_files/diffusion_models/flux-2-klein-4b.safetensors
+curl -L -o models/vae/flux2-vae.safetensors \
+  https://huggingface.co/Comfy-Org/flux2-dev/resolve/main/split_files/vae/flux2-vae.safetensors
+curl -L -o models/klein_adapter/adapter_v14_bal.safetensors \
+  https://huggingface.co/AiArtLab/qwen3-0.6b-4b-adapter/resolve/main/adapter_v14_bal.safetensors
+# Qwen3-0.6B (1.4 GiB) needs no manual step: the node pulls it from the Hub on the
+# first run. Offline machine: fetch it beforehand with `hf download Qwen/Qwen3-0.6B`
+# (or point the node's `encoder` field at a local directory).
+
+# 4. start ComfyUI
+python main.py                                     # then open the URL it prints (:8188)
+
+# 5. in the UI: Workflow -> Open ->
+#    custom_nodes/klein-qwen3-adapter-comfyui/workflows/flux2_klein_qwen3_06b_adapter.json
+#    (dragging the file onto the canvas works too). Type into "Positive prompt", press Run.
+```
+
+| File | Size | Destination |
+|---|---|---|
+| `flux-2-klein-4b.safetensors` | 7.2 GiB | `models/diffusion_models/` |
+| `flux2-vae.safetensors` | 321 MiB | `models/vae/` |
+| `adapter_v14_bal.safetensors` | 840 MiB | `models/klein_adapter/` |
+| Qwen3-0.6B (auto-download) | 1.4 GiB | Hugging Face cache (`$HF_HOME`) |
+
+Text-to-image at 768×1280 with the distilled model takes ~2 s per image on an
+RTX 5090 and peaks at ~12.6 GiB of VRAM (most of it is the klein DiT itself). The
+encoder side is 2.2 GiB (Qwen3-0.6B bf16 + adapter in fp32) instead of the 7.5 GiB
+of klein's native Qwen3-4B — that is where the saving comes from.
+
+The two nodes live under the `KleinAdapter` category; `adapter` accepts a name from
+`models/klein_adapter/`, an absolute path, or an HF repo id (`AiArtLab/qwen3-0.6b-4b-adapter`).
+
 ## Install
 
 Clone into ComfyUI's `custom_nodes/`:
