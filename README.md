@@ -17,7 +17,7 @@ Clone into ComfyUI's `custom_nodes/`:
 
 ```bash
 cd ComfyUI/custom_nodes
-git clone https://github.com/<you>/klein-qwen3-adapter-comfyui
+git clone https://github.com/recoilme/klein-qwen3-adapter-comfyui
 ```
 
 Dependencies (`transformers`, `safetensors`) are already part of a standard
